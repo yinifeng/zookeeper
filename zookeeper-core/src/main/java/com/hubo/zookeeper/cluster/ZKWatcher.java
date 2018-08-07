@@ -2,7 +2,6 @@ package com.hubo.zookeeper.cluster;
 
 import org.apache.zookeeper.*;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -20,7 +19,7 @@ public class ZKWatcher implements Watcher{
     private List<String> cowaList=new CopyOnWriteArrayList<>();
     
     /**zk服务器地址*/
-    private static final String CONNECTION_ADDR="";
+    private static final String CONNECTION_ADDR="192.168.123.60:2181,192.168.123.61:2181,192.168.123.62:2181";
     
     /**定义session失效时间*/
     private static final int SESSION_TIMEOUT=30000;
@@ -66,16 +65,28 @@ public class ZKWatcher implements Watcher{
             else if (Event.EventType.NodeCreated == eventType){
                 System.out.println("节点创建");
                 try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
+                    this.zk.exists(path, true);
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }//更新子节点
             else if (Event.EventType.NodeChildrenChanged == eventType){
-                System.out.println("子节点更新");
+                System.out.println("子节点...更新");
                 try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
+                    List<String> paths = this.zk.getChildren(path, true);
+                    if (paths.size() >= cowaList.size()){
+                        paths.removeAll(cowaList);
+                        for (String p:paths){
+                            this.zk.exists(path+"/"+p, true);
+                            System.out.println("这个是新增的子节点："+path+"/"+p);
+                        }
+                        cowaList.addAll(paths);
+                    }else {
+                        cowaList=paths;
+                    }
+                    System.out.println("cowaList:"+cowaList.toString());
+                    System.out.println("paths:"+paths.toString());
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
@@ -83,13 +94,18 @@ public class ZKWatcher implements Watcher{
             else if (Event.EventType.NodeDataChanged == eventType){
                 System.out.println("节点数据更新");
                 try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
+                    this.zk.exists(path, true);
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }//删除节点
             else if (Event.EventType.NodeDeleted == eventType){
                 System.out.println("节点"+path+" 被删除");
+                try {
+                    this.zk.exists(path, true);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
         }else if (Event.KeeperState.Disconnected == keeperState){
