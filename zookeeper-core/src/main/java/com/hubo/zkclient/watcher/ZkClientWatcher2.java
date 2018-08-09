@@ -6,7 +6,7 @@ import org.I0Itec.zkclient.ZkConnection;
 
 public class ZkClientWatcher2 {
 
-    private static final String CONNECT_ADDRESS="";
+    private static final String CONNECT_ADDRESS="192.168.123.60:2181,192.168.123.61:2181,192.168.123.62:2181";
 
     private static final int SESSION_TIMEOUT=5000;
 
